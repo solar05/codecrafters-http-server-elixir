@@ -28,26 +28,43 @@ defmodule Server do
 
   defp read_request(client) do
     {:ok, raw_data} = :gen_tcp.recv(client, 0)
-    [request_data | _request_body] = raw_data |> String.split("\r\n\r\n", trim: true)
+    [request_data | request_body] = raw_data |> String.split("\r\n\r\n", trim: true)
     [request_line | _headers] = request_data |> String.split("\r\n", trim: true)
     [method, url, _version] = request_line |> String.split(" ", trim: true)
-    run_request(method, url)
+    run_request(method, url, request_body)
   end
 
   defp write_response(client, response) do
     :gen_tcp.send(client, response)
   end
 
-  defp run_request("GET", "/") do
+  defp run_request("GET", "/echo/" <> echo_body, _) do
+    format_response(200, echo_body)
+  end
+
+  defp run_request("GET", "/", _) do
     format_response(200, "OK")
   end
 
-  defp run_request(_method, _url) do
+  defp run_request(_method, _url, _) do
     format_response(404, "Not Found")
   end
 
-  defp format_response(code, body) do
-    "HTTP/1.1 #{code} #{body}\r\n\r\n"
+  defp format_response(200, body) do
+    if String.length(body) != 0 do
+      formatted_body = format_body(body)
+      "HTTP/1.1 200 OK\r\n#{formatted_body}"
+    else
+      "HTTP/1.1 200 OK\r\n\r\n"
+    end
+  end
+
+  defp format_response(404, _body) do
+    "HTTP/1.1 404 Not Found\r\n\r\n"
+  end
+
+  defp format_body(body) do
+    "Content-Type: text/plain\r\nContent-Length: #{String.length(body)}\r\n\r\n#{body}"
   end
 end
 
