@@ -29,24 +29,34 @@ defmodule Server do
   defp read_request(client) do
     {:ok, raw_data} = :gen_tcp.recv(client, 0)
     [request_data | request_body] = raw_data |> String.split("\r\n\r\n", trim: true)
-    [request_line | _headers] = request_data |> String.split("\r\n", trim: true)
+    [request_line | headers] = request_data |> String.split("\r\n", trim: true)
     [method, url, _version] = request_line |> String.split(" ", trim: true)
-    run_request(method, url, request_body)
+    run_request(method, url, request_body, headers)
   end
 
   defp write_response(client, response) do
     :gen_tcp.send(client, response)
   end
 
-  defp run_request("GET", "/echo/" <> echo_body, _) do
+  defp run_request("GET", "/user-agent", _, headers) do
+    user_agent_value =
+      headers
+      |> Enum.find(fn header -> String.starts_with?(header, "User-Agent") end)
+      |> String.split("User-Agent: ", trim: true)
+      |> hd()
+
+    format_response(200, user_agent_value)
+  end
+
+  defp run_request("GET", "/echo/" <> echo_body, _, _) do
     format_response(200, echo_body)
   end
 
-  defp run_request("GET", "/", _) do
+  defp run_request("GET", "/", _, _) do
     format_response(200, "OK")
   end
 
-  defp run_request(_method, _url, _) do
+  defp run_request(_method, _url, _, _) do
     format_response(404, "Not Found")
   end
 
