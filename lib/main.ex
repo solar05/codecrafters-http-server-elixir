@@ -27,12 +27,27 @@ defmodule Server do
   end
 
   defp read_request(client) do
-    # {:ok, raw_data} = :gen_tcp.recv(client, 0)
-    "HTTP/1.1 200 OK\r\n\r\n"
+    {:ok, raw_data} = :gen_tcp.recv(client, 0)
+    [request_data | _request_body] = raw_data |> String.split("\r\n\r\n", trim: true)
+    [request_line | _headers] = request_data |> String.split("\r\n", trim: true)
+    [method, url, _version] = request_line |> String.split(" ", trim: true)
+    run_request(method, url)
   end
 
   defp write_response(client, response) do
     :gen_tcp.send(client, response)
+  end
+
+  defp run_request("GET", "/") do
+    format_response(200, "OK")
+  end
+
+  defp run_request(_method, _url) do
+    format_response(404, "Not Found")
+  end
+
+  defp format_response(code, body) do
+    "HTTP/1.1 #{code} #{body}\r\n\r\n"
   end
 end
 
