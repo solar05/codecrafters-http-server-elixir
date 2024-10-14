@@ -1,4 +1,4 @@
-[![progress-banner](https://backend.codecrafters.io/progress/http-server/6c2e7e64-45df-4fd6-9df6-127d28111256)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
+[![progress-banner](https://backend.codecrafters.io/progress/http-server/6c2e7e64-45df-4fd6-9df6-127d28111256)](https://app.codecrafters.io/users/solar05?r=2qF)
 
 This is a starting point for Elixir solutions to the
 ["Build Your Own HTTP server" Challenge](https://app.codecrafters.io/courses/http-server/overview).
