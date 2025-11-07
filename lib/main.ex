@@ -45,36 +45,51 @@ defmodule Server do
       |> String.split("User-Agent: ", trim: true)
       |> hd()
 
-    format_response(200, user_agent_value)
+    format_response(200, :plain_text, user_agent_value)
   end
 
   defp run_request("GET", "/echo/" <> echo_body, _, _) do
-    format_response(200, echo_body)
+    format_response(200, :plain_text, echo_body)
+  end
+
+  defp run_request("GET", "/files/" <> file_path, _, _) do
+    if File.exists?(file_path) do
+      case File.read(file_path) do
+        {:ok, data} -> format_response(200, :file, data)
+        {:error, _} -> format_response(404, :no_type, "Not Found")
+      end
+    else
+      format_response(404, :no_type, "Not Found")
+    end
   end
 
   defp run_request("GET", "/", _, _) do
-    format_response(200, "OK")
+    format_response(200, :no_type, "OK")
   end
 
   defp run_request(_method, _url, _, _) do
-    format_response(404, "Not Found")
+    format_response(404, :no_type, "Not Found")
   end
 
-  defp format_response(200, body) do
+  defp format_response(200, type, body) do
     if String.length(body) != 0 do
-      formatted_body = format_body(body)
+      formatted_body = format_body(type, body)
       "HTTP/1.1 200 OK\r\n#{formatted_body}"
     else
       "HTTP/1.1 200 OK\r\n\r\n"
     end
   end
 
-  defp format_response(404, _body) do
+  defp format_response(404, _type, _body) do
     "HTTP/1.1 404 Not Found\r\n\r\n"
   end
 
-  defp format_body(body) do
+  defp format_body(:plain_text, body) do
     "Content-Type: text/plain\r\nContent-Length: #{String.length(body)}\r\n\r\n#{body}"
+  end
+
+  defp format_body(:file, body) do
+    "Content-Type: application/octet-stream\r\nContent-Length: #{byte_size(body)}\r\n\r\n#{body}"
   end
 end
 
