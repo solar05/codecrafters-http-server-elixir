@@ -53,7 +53,7 @@ defmodule Server do
   end
 
   defp run_request("GET", "/files/" <> file_path, _, _) do
-    if File.exists?(file_path) do
+    if File.exists?("/files/#{file_path}") do
       case File.read(file_path) do
         {:ok, data} -> format_response(200, :file, data)
         {:error, _} -> format_response(404, :no_type, "Not Found")
